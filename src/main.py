@@ -16,12 +16,12 @@ META_ZIP_URL = "https://storage.googleapis.com/public-datasets-lila/caltechcamer
 def ensure_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
-def download_bytes(url: str, timeout: int = 60) -> bytes:
+def download_bytes(url: str, timeout: int = 60) -> bytes: #downloads content from URL and returns bytes
     r = requests.get(url, timeout=timeout)
-    r.raise_for_status()
+    r.raise_for_status() #stop if download failed
     return r.content
 
-def load_coco_camera_traps(meta_zip_url: str, meta_dir: str) -> Dict:
+def load_coco_camera_traps(meta_zip_url: str, meta_dir: str) -> Dict: 
     """
     Downloads and extracts COCO Camera Traps JSON zip, loads the JSON into memory.
     """
@@ -177,8 +177,8 @@ def draw_overlay(bgr: np.ndarray, mask: np.ndarray, pred: int, fg_area: int, gt:
     overlay = bgr.copy()
     mask_col = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
     # tint mask in red
-    mask_col[:, :, 0] = 0
-    mask_col[:, :, 1] = 0
+    mask_col[:, :, 0] = 0 #zero blue
+    mask_col[:, :, 1] = 0 #zero green
     overlay = cv2.addWeighted(overlay, 1.0, mask_col, 0.35, 0)
 
     txt = f"pred={pred} gt={gt} fg_area={fg_area}"
@@ -187,15 +187,15 @@ def draw_overlay(bgr: np.ndarray, mask: np.ndarray, pred: int, fg_area: int, gt:
     return overlay
 
 def run_experiment(
-    meta_zip_url: str,
-    cache_dir: str,
-    meta_dir: str,
-    out_dir: str,
-    max_sequences: int = 30,
-    frames_per_seq: int = 8,
-    diff_thresh: int = 25,
-    area_thresh: int = 1500,
-    random_seed: int = 42,
+    meta_zip_url: str, 
+    cache_dir: str, 
+    meta_dir: str, 
+    out_dir: str, 
+    max_sequences: int = 30, #sequences to sample
+    frames_per_seq: int = 8, #frames per sequence to use
+    diff_thresh: int = 25, #pixel difference threshold
+    area_thresh: int = 1500, #foreground area threshold
+    random_seed: int = 42, #random seed for sampling sequences
 ):
     ensure_dir(out_dir)
     ensure_dir(os.path.join(out_dir, "overlays"))
@@ -257,14 +257,14 @@ def run_experiment(
             mask = mog2.apply(frames_gray[k_frame], learningRate=0)
             mask = cv2.threshold(mask, 128, 255, cv2.THRESH_BINARY)[1]
             k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, k, iterations=1)
-            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k, iterations=2)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, k, iterations=1) #remove noise
+            mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k, iterations=2) #fill gaps
 
             #prediction
             pred, fg_area = classify_animal_present(mask, area_thresh=area_thresh)
 
             #update confusion matrix
-            if pred == 1 and gt == 1:
+            if pred == 1 and gt == 1: 
                 TP += 1
             elif pred == 1 and gt == 0:
                 FP += 1
@@ -274,7 +274,7 @@ def run_experiment(
                 FN += 1
 
             #accuracy counters
-            correct += int(pred == gt)
+            correct += int(pred == gt) 
             total += 1
 
             #save results
